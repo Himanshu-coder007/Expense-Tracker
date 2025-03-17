@@ -1,7 +1,7 @@
 import React from "react";
 import { auth } from "../firebase";
 import { signOut } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // Import Link
 import { FaHome, FaMoneyBill, FaSignOutAlt, FaUser, FaChartLine } from "react-icons/fa";
 
 const Sidebar = ({ user }) => {
@@ -45,27 +45,27 @@ const Sidebar = ({ user }) => {
 
       {/* Navigation Links */}
       <nav className="mt-10">
-        <a
-          href="#"
+        <Link
+          to="/dashboard"
           className="flex items-center px-6 py-2 text-gray-300 hover:bg-gray-700"
         >
           <FaHome className="w-5 h-5" />
           <span className="ml-3">Homepage</span>
-        </a>
-        <a
-          href="#"
+        </Link>
+        <Link
+          to="/dashboard/income"
           className="flex items-center px-6 py-2 text-gray-300 hover:bg-gray-700"
         >
           <FaMoneyBill className="w-5 h-5" />
           <span className="ml-3">Income</span>
-        </a>
-        <a
-          href="#"
+        </Link>
+        <Link
+          to="/dashboard/expense"
           className="flex items-center px-6 py-2 text-gray-300 hover:bg-gray-700"
         >
           <FaMoneyBill className="w-5 h-5" />
           <span className="ml-3">Expense</span>
-        </a>
+        </Link>
       </nav>
 
       {/* Logout Button */}

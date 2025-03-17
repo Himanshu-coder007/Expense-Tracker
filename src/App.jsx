@@ -1,10 +1,12 @@
-import { useSelector, useDispatch } from "react-redux";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Auth from "./Auth/Auth";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Homepage from "./pages/Homepage";
+import IncomePage from "./pages/Income"; // Add this
+import ExpensePage from "./pages/Expense"; // Add this
 
 function App() {
   return (
@@ -30,7 +32,12 @@ function App() {
               <Dashboard />
             </ProtectedRoute>
           }
-        />
+        >
+          {/* Nested routes */}
+          <Route index element={<Homepage />} /> {/* Default route */}
+          <Route path="income" element={<IncomePage />} />
+          <Route path="expense" element={<ExpensePage />} />
+        </Route>
       </Routes>
     </Router>
   );

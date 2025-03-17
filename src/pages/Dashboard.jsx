@@ -3,8 +3,9 @@ import { auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import Sidebar from "../components/Sidebar";
 import Homepage from "./Homepage";
+import { Outlet } from "react-router-dom";
 
-const CounterPage = () => {
+const Dashboard = () => {
   const [user, setUser] = useState(null); // State to store user data
 
   // Fetch authenticated user data
@@ -35,10 +36,10 @@ const CounterPage = () => {
 
       {/* Homepage - 85% width */}
       <div className="w-[85%]">
-        <Homepage />
+      <Outlet context={{ user }}/>
       </div>
     </div>
   );
 };
 
-export default CounterPage;
+export default Dashboard;
