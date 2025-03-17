@@ -4,6 +4,7 @@ import { auth, provider } from "../firebase";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc"; // Import the Google icon
+import { toast } from "react-toastify"
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -18,7 +19,8 @@ const Auth = () => {
       await createUserWithEmailAndPassword(auth, email, password);
       navigate("/dashboard");
     } catch (error) {
-      console.error("Error signing up:", error);
+        toast.error("Error signing up. Please try again.");
+        console.error("Error signing up:", error);
     }
   };
 
@@ -28,6 +30,7 @@ const Auth = () => {
       await signInWithEmailAndPassword(auth, email, password);
       navigate("/dashboard");
     } catch (error) {
+        toast.error("Invalid email or password. Please try again.");
       console.error("Error logging in:", error);
     }
   };
@@ -37,7 +40,8 @@ const Auth = () => {
       await signInWithPopup(auth, provider);
       navigate("/dashboard");
     } catch (error) {
-      console.error("Error signing in with Google:", error);
+        toast.error("Error signing in with Google. Please try again.");
+        console.error("Error signing in with Google:", error);
     }
   };
 

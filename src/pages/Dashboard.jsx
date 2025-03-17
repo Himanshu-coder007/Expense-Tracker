@@ -1,28 +1,42 @@
-import React from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { increment, decrement } from "../redux/counterSlice";
+import React, { useEffect, useState } from "react";
+import { auth } from "../firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import Sidebar from "../components/Sidebar";
+import Homepage from "./Homepage";
 
 const CounterPage = () => {
-  const count = useSelector((state) => state.counter.value); // 🔹 Fetching count from Redux store
-  const dispatch = useDispatch();
+  const [user, setUser] = useState(null); // State to store user data
+
+  // Fetch authenticated user data
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is signed in
+        setUser({
+          displayName: user.displayName, // User's name
+          photoURL: user.photoURL, // User's profile photo URL
+        });
+      } else {
+        // User is signed out
+        setUser(null);
+      }
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">Counter Page</h1>
-      <h2 className="text-xl mt-4">Count: {count}</h2>
+    <div className="flex flex-row h-screen">
+      {/* Sidebar - 15% width */}
+      <div className="w-[15%]">
+        <Sidebar user={user} />
+      </div>
 
-      <button
-        className="bg-green-500 text-white px-4 py-2 rounded mr-2"
-        onClick={() => dispatch(increment())}
-      >
-        Increment
-      </button>
-      <button
-        className="bg-red-500 text-white px-4 py-2 rounded"
-        onClick={() => dispatch(decrement())}
-      >
-        Decrement
-      </button>
+      {/* Homepage - 85% width */}
+      <div className="w-[85%]">
+        <Homepage />
+      </div>
     </div>
   );
 };
