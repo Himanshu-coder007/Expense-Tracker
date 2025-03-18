@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
-import { db } from "../firebase"; // Import Firestore instance
-import { collection, onSnapshot } from "firebase/firestore"; // Import Firestore functions
+import { db, auth } from "../firebase"; // Import Firestore instance and auth
+import { collection, onSnapshot, query, where } from "firebase/firestore"; // Import Firestore functions
 import TransactionChart from "../components/TransactionChart";
 import TransactionSection from "../components/TransactionSection";
 
@@ -19,49 +19,53 @@ const Homepage = () => {
 
   // Fetch transactions from Firestore on component mount
   useEffect(() => {
-    // Fetch incomes
-    const incomesCollection = collection(db, "incomes");
-    const unsubscribeIncomes = onSnapshot(incomesCollection, (snapshot) => {
-      const incomeList = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        type: "Income", // Add type for incomes
-      }));
-      setTransactions((prev) => [
-        ...prev.filter((t) => t.type !== "Income"),
-        ...incomeList,
-      ]);
-      const totalIncome = incomeList.reduce(
-        (total, income) => total + Number(income.amount),
-        0
-      );
-      setTotalIncome(totalIncome);
-    });
+    if (auth.currentUser) {
+      // Fetch incomes
+      const incomesCollection = collection(db, "incomes");
+      const qIncomes = query(incomesCollection, where("userId", "==", auth.currentUser.uid)); // Filter by userId
+      const unsubscribeIncomes = onSnapshot(qIncomes, (snapshot) => {
+        const incomeList = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          type: "Income", // Add type for incomes
+        }));
+        setTransactions((prev) => [
+          ...prev.filter((t) => t.type !== "Income"),
+          ...incomeList,
+        ]);
+        const totalIncome = incomeList.reduce(
+          (total, income) => total + Number(income.amount),
+          0
+        );
+        setTotalIncome(totalIncome);
+      });
 
-    // Fetch expenses
-    const expensesCollection = collection(db, "expenses");
-    const unsubscribeExpenses = onSnapshot(expensesCollection, (snapshot) => {
-      const expenseList = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        type: "Expense", // Add type for expenses
-      }));
-      setTransactions((prev) => [
-        ...prev.filter((t) => t.type !== "Expense"),
-        ...expenseList,
-      ]);
-      const totalExpenses = expenseList.reduce(
-        (total, expense) => total + Number(expense.amount),
-        0
-      );
-      setTotalExpenses(totalExpenses);
-    });
+      // Fetch expenses
+      const expensesCollection = collection(db, "expenses");
+      const qExpenses = query(expensesCollection, where("userId", "==", auth.currentUser.uid)); // Filter by userId
+      const unsubscribeExpenses = onSnapshot(qExpenses, (snapshot) => {
+        const expenseList = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          type: "Expense", // Add type for expenses
+        }));
+        setTransactions((prev) => [
+          ...prev.filter((t) => t.type !== "Expense"),
+          ...expenseList,
+        ]);
+        const totalExpenses = expenseList.reduce(
+          (total, expense) => total + Number(expense.amount),
+          0
+        );
+        setTotalExpenses(totalExpenses);
+      });
 
-    // Cleanup subscriptions on unmount
-    return () => {
-      unsubscribeIncomes();
-      unsubscribeExpenses();
-    };
+      // Cleanup subscriptions on unmount
+      return () => {
+        unsubscribeIncomes();
+        unsubscribeExpenses();
+      };
+    }
   }, []);
 
   // Calculate net balance whenever totalIncome or totalExpenses changes

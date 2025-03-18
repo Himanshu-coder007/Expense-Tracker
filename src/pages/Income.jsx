@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { db } from "../firebase"; // Import Firestore instance
-import { collection, addDoc, onSnapshot } from "firebase/firestore"; // Import Firestore functions
+import { db, auth } from "../firebase"; // Import Firestore instance and auth
+import { collection, addDoc, onSnapshot, query, where } from "firebase/firestore"; // Import Firestore functions
 
 const Income = () => {
   const [incomes, setIncomes] = useState([]);
@@ -13,16 +13,19 @@ const Income = () => {
 
   // Fetch incomes from Firestore on component mount
   useEffect(() => {
-    const incomesCollection = collection(db, "incomes");
-    const unsubscribe = onSnapshot(incomesCollection, (snapshot) => {
-      const incomeList = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setIncomes(incomeList);
-    });
+    if (auth.currentUser) {
+      const incomesCollection = collection(db, "incomes");
+      const q = query(incomesCollection, where("userId", "==", auth.currentUser.uid)); // Filter by userId
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const incomeList = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setIncomes(incomeList);
+      });
 
-    return () => unsubscribe(); // Cleanup subscription on unmount
+      return () => unsubscribe(); // Cleanup subscription on unmount
+    }
   }, []);
 
   const handleInputChange = (e) => {
@@ -34,7 +37,10 @@ const Income = () => {
     e.preventDefault();
     try {
       const incomesCollection = collection(db, "incomes");
-      await addDoc(incomesCollection, formData); // Add new income to Firestore
+      await addDoc(incomesCollection, {
+        ...formData,
+        userId: auth.currentUser.uid, // Add the user's UID
+      });
       setFormData({ date: "", category: "", amount: "", description: "" }); // Reset form
     } catch (error) {
       console.error("Error adding document: ", error);
@@ -117,7 +123,10 @@ const Income = () => {
       {/* Income List */}
       <div className="bg-white p-6 rounded-lg shadow-md">
         <h2 className="text-xl font-bold mb-4">Income Transactions</h2>
-        <div className="overflow-x-auto">
+        <div
+          className="overflow-x-auto"
+          style={{ maxHeight: "400px", overflowY: "auto" }}
+        >
           <table className="w-full">
             <thead>
               <tr className="border-b">

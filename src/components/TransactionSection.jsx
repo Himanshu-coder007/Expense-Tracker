@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase"; // Import Firestore instance
-import { collection, onSnapshot } from "firebase/firestore"; // Import Firestore functions
+import { collection, query, where, onSnapshot } from "firebase/firestore"; // Import Firestore functions
+import { getAuth } from "firebase/auth"; // Import Firebase Authentication
 
 const TransactionSection = () => {
-  // State for transactions
   const [transactions, setTransactions] = useState([]);
-
-  // State for sorting
   const [sortByDate, setSortByDate] = useState("newest"); // "newest" or "oldest"
   const [sortByCategory, setSortByCategory] = useState("All"); // "All" or specific category
 
-  // Categories for dropdown
   const categories = [
     "All",
     "Salary",
@@ -28,11 +25,21 @@ const TransactionSection = () => {
     "Other",
   ];
 
+  // Get the current logged-in user
+  const auth = getAuth();
+  const user = auth.currentUser;
+
   // Fetch transactions from Firestore on component mount
   useEffect(() => {
-    // Fetch incomes
+    if (!user) return; // If no user is logged in, do nothing
+
+    // Fetch incomes for the logged-in user
     const incomesCollection = collection(db, "incomes");
-    const unsubscribeIncomes = onSnapshot(incomesCollection, (snapshot) => {
+    const incomesQuery = query(
+      incomesCollection,
+      where("userId", "==", user.uid) // Filter by userId
+    );
+    const unsubscribeIncomes = onSnapshot(incomesQuery, (snapshot) => {
       const incomeList = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
@@ -44,9 +51,13 @@ const TransactionSection = () => {
       ]);
     });
 
-    // Fetch expenses
+    // Fetch expenses for the logged-in user
     const expensesCollection = collection(db, "expenses");
-    const unsubscribeExpenses = onSnapshot(expensesCollection, (snapshot) => {
+    const expensesQuery = query(
+      expensesCollection,
+      where("userId", "==", user.uid) // Filter by userId
+    );
+    const unsubscribeExpenses = onSnapshot(expensesQuery, (snapshot) => {
       const expenseList = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
@@ -63,7 +74,7 @@ const TransactionSection = () => {
       unsubscribeIncomes();
       unsubscribeExpenses();
     };
-  }, []);
+  }, [user]); // Re-run effect if the user changes
 
   // Sort transactions by date and filter by category
   const sortedTransactions = transactions

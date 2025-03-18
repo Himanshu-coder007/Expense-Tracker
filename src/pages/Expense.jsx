@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { db } from "../firebase"; // Import Firestore instance
-import { collection, addDoc, onSnapshot } from "firebase/firestore"; // Import Firestore functions
+import { db, auth } from "../firebase"; // Import Firestore instance and auth
+import { collection, addDoc, onSnapshot, query, where } from "firebase/firestore"; // Import Firestore functions
 
 const Expense = () => {
   const [expenses, setExpenses] = useState([]);
@@ -13,16 +13,19 @@ const Expense = () => {
 
   // Fetch expenses from Firestore on component mount
   useEffect(() => {
-    const expensesCollection = collection(db, "expenses");
-    const unsubscribe = onSnapshot(expensesCollection, (snapshot) => {
-      const expenseList = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setExpenses(expenseList);
-    });
+    if (auth.currentUser) {
+      const expensesCollection = collection(db, "expenses");
+      const q = query(expensesCollection, where("userId", "==", auth.currentUser.uid)); // Filter by userId
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const expenseList = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setExpenses(expenseList);
+      });
 
-    return () => unsubscribe(); // Cleanup subscription on unmount
+      return () => unsubscribe(); // Cleanup subscription on unmount
+    }
   }, []);
 
   const handleInputChange = (e) => {
@@ -34,7 +37,10 @@ const Expense = () => {
     e.preventDefault();
     try {
       const expensesCollection = collection(db, "expenses");
-      await addDoc(expensesCollection, formData); // Add new expense to Firestore
+      await addDoc(expensesCollection, {
+        ...formData,
+        userId: auth.currentUser.uid, // Add the user's UID
+      });
       setFormData({ date: "", category: "", amount: "", description: "" }); // Reset form
     } catch (error) {
       console.error("Error adding document: ", error);
@@ -43,12 +49,12 @@ const Expense = () => {
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold">Expenses</h1>
+
+       {/* Header */}
+       <div className="mb-8">
+        <h1 className="text-2xl font-bold">Expense</h1>
         <p className="text-gray-600">Manage your expense transactions.</p>
       </div>
-
       {/* Add Expense Form */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-8">
         <h2 className="text-xl font-bold mb-4">Add Expense</h2>
@@ -112,14 +118,21 @@ const Expense = () => {
       <div className="bg-white p-6 rounded-lg shadow-md mb-8">
         <h2 className="text-xl font-bold mb-4">Total Expenses</h2>
         <p className="text-2xl font-bold text-red-600">
-          ${expenses.reduce((total, expense) => total + Number(expense.amount), 0)}
+          $
+          {expenses.reduce(
+            (total, expense) => total + Number(expense.amount),
+            0
+          )}
         </p>
       </div>
 
       {/* Expense List */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
+      <div className="bg-white p-4 rounded-lg shadow-md">
         <h2 className="text-xl font-bold mb-4">Expense Transactions</h2>
-        <div className="overflow-x-auto">
+        <div
+          className="overflow-x-auto"
+          style={{ maxHeight: "400px", overflowY: "auto" }}
+        >
           <table className="w-full">
             <thead>
               <tr className="border-b">

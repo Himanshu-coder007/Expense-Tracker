@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import Sidebar from "../components/Sidebar";
-import Homepage from "./Homepage";
 import { Outlet } from "react-router-dom";
 
 const Dashboard = () => {
@@ -28,15 +27,15 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div className="flex flex-row h-screen">
+    <div className="flex flex-row h-screen overflow-hidden">
       {/* Sidebar - 15% width */}
       <div className="w-[15%]">
         <Sidebar user={user} />
       </div>
 
-      {/* Homepage - 85% width */}
-      <div className="w-[85%]">
-      <Outlet context={{ user }}/>
+      {/* Content Area - 85% width */}
+      <div className="w-[85%] overflow-y-auto">
+        <Outlet context={{ user }} />
       </div>
     </div>
   );
