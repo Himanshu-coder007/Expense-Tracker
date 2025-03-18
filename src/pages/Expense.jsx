@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { db, auth } from "../firebase"; // Import Firestore instance and auth
-import { collection, addDoc, onSnapshot, query, where } from "firebase/firestore"; // Import Firestore functions
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  query,
+  where,
+  doc,
+  updateDoc,
+  deleteDoc,
+} from "firebase/firestore"; // Import Firestore functions
 
 const Expense = () => {
   const [expenses, setExpenses] = useState([]);
@@ -10,6 +19,7 @@ const Expense = () => {
     amount: "",
     description: "",
   });
+  const [editId, setEditId] = useState(null); // Track the ID of the expense being edited
 
   // Fetch expenses from Firestore on component mount
   useEffect(() => {
@@ -37,27 +47,57 @@ const Expense = () => {
     e.preventDefault();
     try {
       const expensesCollection = collection(db, "expenses");
-      await addDoc(expensesCollection, {
-        ...formData,
-        userId: auth.currentUser.uid, // Add the user's UID
-      });
+      if (editId) {
+        // If editing, update the existing document
+        const expenseDoc = doc(db, "expenses", editId);
+        await updateDoc(expenseDoc, formData);
+        setEditId(null); // Reset edit mode
+      } else {
+        // If adding, create a new document
+        await addDoc(expensesCollection, {
+          ...formData,
+          userId: auth.currentUser.uid, // Add the user's UID
+        });
+      }
       setFormData({ date: "", category: "", amount: "", description: "" }); // Reset form
     } catch (error) {
-      console.error("Error adding document: ", error);
+      console.error("Error adding/updating document: ", error);
+    }
+  };
+
+  const handleEdit = (expense) => {
+    // Set the form data to the expense being edited
+    setFormData({
+      date: expense.date,
+      category: expense.category,
+      amount: expense.amount,
+      description: expense.description,
+    });
+    setEditId(expense.id); // Set the ID of the expense being edited
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const expenseDoc = doc(db, "expenses", id);
+      await deleteDoc(expenseDoc);
+    } catch (error) {
+      console.error("Error deleting document: ", error);
     }
   };
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
-
-       {/* Header */}
-       <div className="mb-8">
+      {/* Header */}
+      <div className="mb-8">
         <h1 className="text-2xl font-bold">Expense</h1>
         <p className="text-gray-600">Manage your expense transactions.</p>
       </div>
-      {/* Add Expense Form */}
+
+      {/* Add/Edit Expense Form */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-        <h2 className="text-xl font-bold mb-4">Add Expense</h2>
+        <h2 className="text-xl font-bold mb-4">
+          {editId ? "Edit Expense" : "Add Expense"}
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
@@ -109,8 +149,20 @@ const Expense = () => {
             type="submit"
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
           >
-            Add Expense
+            {editId ? "Update Expense" : "Add Expense"}
           </button>
+          {editId && (
+            <button
+              type="button"
+              onClick={() => {
+                setFormData({ date: "", category: "", amount: "", description: "" });
+                setEditId(null);
+              }}
+              className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 ml-2"
+            >
+              Cancel Edit
+            </button>
+          )}
         </form>
       </div>
 
@@ -140,6 +192,7 @@ const Expense = () => {
                 <th className="text-left py-2">Category</th>
                 <th className="text-left py-2">Amount</th>
                 <th className="text-left py-2">Description</th>
+                <th className="text-left py-2">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -149,6 +202,20 @@ const Expense = () => {
                   <td className="py-2">{expense.category}</td>
                   <td className="py-2 text-red-600">-${expense.amount}</td>
                   <td className="py-2">{expense.description}</td>
+                  <td className="py-2">
+                    <button
+                      onClick={() => handleEdit(expense)}
+                      className="bg-blue-500 text-white px-2 py-1 rounded-lg hover:bg-blue-600 mr-2"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(expense.id)}
+                      className="bg-red-500 text-white px-2 py-1 rounded-lg hover:bg-red-600"
+                    >
+                      Delete
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
