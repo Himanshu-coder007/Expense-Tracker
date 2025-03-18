@@ -86,19 +86,19 @@ const Homepage = () => {
       {/* Cards Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {/* Total Income Card */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="flex flex-col items-center bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-lg font-semibold text-gray-700">Total Income</h2>
           <p className="text-2xl font-bold text-green-600">${totalIncome}</p>
         </div>
 
         {/* Total Expenses Card */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="flex flex-col items-center bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-lg font-semibold text-gray-700">Total Expenses</h2>
           <p className="text-2xl font-bold text-red-600">${totalExpenses}</p>
         </div>
 
         {/* Net Balance Card */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="flex flex-col items-center bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-lg font-semibold text-gray-700">Net Balance</h2>
           <p className="text-2xl font-bold text-blue-600">${netBalance}</p>
         </div>
