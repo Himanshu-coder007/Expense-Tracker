@@ -1,14 +1,78 @@
-// src/components/TransactionSection.jsx
-import React from "react";
+import React, { useState } from "react";
 
-const TransactionSection = ({
-  sortByDate,
-  setSortByDate,
-  sortByCategory,
-  setSortByCategory,
-  categories,
-  sortedTransactions,
-}) => {
+const TransactionSection = () => {
+  // Example transactions data
+  const transactions = [
+    {
+      id: 1,
+      date: "2023-10-01",
+      category: "Salary",
+      amount: 2000,
+      type: "Income",
+    },
+    {
+      id: 2,
+      date: "2023-10-02",
+      category: "Groceries",
+      amount: 200,
+      type: "Expense",
+    },
+    {
+      id: 3,
+      date: "2023-10-03",
+      category: "Rent",
+      amount: 1000,
+      type: "Expense",
+    },
+    {
+      id: 4,
+      date: "2023-10-04",
+      category: "Freelance Work",
+      amount: 500,
+      type: "Income",
+    },
+    {
+      id: 5,
+      date: "2023-10-05",
+      category: "Entertainment",
+      amount: 50,
+      type: "Expense",
+    },
+  ];
+
+  // State for sorting
+  const [sortByDate, setSortByDate] = useState("newest"); // "newest" or "oldest"
+  const [sortByCategory, setSortByCategory] = useState("All"); // "All" or specific category
+
+  // Categories for dropdown
+  const categories = [
+    "All",
+    "Salary",
+    "Groceries",
+    "Rent",
+    "Freelance Work",
+    "Entertainment",
+    "Utilities",
+    "Transportation",
+    "Health & Fitness",
+    "Shopping",
+    "Education",
+    "Travel",
+    "Debt & Loans",
+    "Other",
+  ];
+
+  // Sort transactions by date and filter by category
+  const sortedTransactions = transactions
+    .filter((transaction) =>
+      sortByCategory === "All" ? true : transaction.category === sortByCategory
+    )
+    .sort((a, b) =>
+      sortByDate === "newest"
+        ? new Date(b.date) - new Date(a.date)
+        : new Date(a.date) - new Date(b.date)
+    );
+
   return (
     <>
       {/* Sorting Dropdowns */}
