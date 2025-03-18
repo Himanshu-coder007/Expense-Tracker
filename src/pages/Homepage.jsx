@@ -1,11 +1,60 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
+import { db } from "../firebase"; // Import Firestore instance
+import { collection, onSnapshot } from "firebase/firestore"; // Import Firestore functions
 import TransactionChart from "../components/TransactionChart";
-import TransactionSection from "../components/TransactionSection"; // Import the combined component
+import TransactionSection from "../components/TransactionSection";
 
 const Homepage = () => {
   // Access user data from Outlet context
   const { user } = useOutletContext();
+
+  // State for totals
+  const [totalIncome, setTotalIncome] = useState(0);
+  const [totalExpenses, setTotalExpenses] = useState(0);
+  const [netBalance, setNetBalance] = useState(0);
+
+  // Fetch transactions from Firestore on component mount
+  useEffect(() => {
+    // Fetch incomes
+    const incomesCollection = collection(db, "incomes");
+    const unsubscribeIncomes = onSnapshot(incomesCollection, (snapshot) => {
+      const incomeList = snapshot.docs.map((doc) => ({
+        ...doc.data(),
+        type: "Income", // Add type for incomes
+      }));
+      const totalIncome = incomeList.reduce(
+        (total, income) => total + Number(income.amount),
+        0
+      );
+      setTotalIncome(totalIncome);
+    });
+
+    // Fetch expenses
+    const expensesCollection = collection(db, "expenses");
+    const unsubscribeExpenses = onSnapshot(expensesCollection, (snapshot) => {
+      const expenseList = snapshot.docs.map((doc) => ({
+        ...doc.data(),
+        type: "Expense", // Add type for expenses
+      }));
+      const totalExpenses = expenseList.reduce(
+        (total, expense) => total + Number(expense.amount),
+        0
+      );
+      setTotalExpenses(totalExpenses);
+    });
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      unsubscribeIncomes();
+      unsubscribeExpenses();
+    };
+  }, []);
+
+  // Calculate net balance whenever totalIncome or totalExpenses changes
+  useEffect(() => {
+    setNetBalance(totalIncome - totalExpenses);
+  }, [totalIncome, totalExpenses]);
 
   return (
     <div className="h-full p-8 bg-gray-100 overflow-y-auto">
@@ -22,19 +71,19 @@ const Homepage = () => {
         {/* Total Income Card */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-lg font-semibold text-gray-700">Total Income</h2>
-          <p className="text-2xl font-bold text-green-600">$5,000</p>
+          <p className="text-2xl font-bold text-green-600">${totalIncome}</p>
         </div>
 
         {/* Total Expenses Card */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-lg font-semibold text-gray-700">Total Expenses</h2>
-          <p className="text-2xl font-bold text-red-600">$3,000</p>
+          <p className="text-2xl font-bold text-red-600">${totalExpenses}</p>
         </div>
 
         {/* Net Balance Card */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-lg font-semibold text-gray-700">Net Balance</h2>
-          <p className="text-2xl font-bold text-blue-600">$2,000</p>
+          <p className="text-2xl font-bold text-blue-600">${netBalance}</p>
         </div>
       </div>
 

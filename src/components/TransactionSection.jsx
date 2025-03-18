@@ -1,44 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { db } from "../firebase"; // Import Firestore instance
+import { collection, onSnapshot } from "firebase/firestore"; // Import Firestore functions
 
 const TransactionSection = () => {
-  // Example transactions data
-  const transactions = [
-    {
-      id: 1,
-      date: "2023-10-01",
-      category: "Salary",
-      amount: 2000,
-      type: "Income",
-    },
-    {
-      id: 2,
-      date: "2023-10-02",
-      category: "Groceries",
-      amount: 200,
-      type: "Expense",
-    },
-    {
-      id: 3,
-      date: "2023-10-03",
-      category: "Rent",
-      amount: 1000,
-      type: "Expense",
-    },
-    {
-      id: 4,
-      date: "2023-10-04",
-      category: "Freelance Work",
-      amount: 500,
-      type: "Income",
-    },
-    {
-      id: 5,
-      date: "2023-10-05",
-      category: "Entertainment",
-      amount: 50,
-      type: "Expense",
-    },
-  ];
+  // State for transactions
+  const [transactions, setTransactions] = useState([]);
 
   // State for sorting
   const [sortByDate, setSortByDate] = useState("newest"); // "newest" or "oldest"
@@ -61,6 +27,43 @@ const TransactionSection = () => {
     "Debt & Loans",
     "Other",
   ];
+
+  // Fetch transactions from Firestore on component mount
+  useEffect(() => {
+    // Fetch incomes
+    const incomesCollection = collection(db, "incomes");
+    const unsubscribeIncomes = onSnapshot(incomesCollection, (snapshot) => {
+      const incomeList = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        type: "Income", // Add type for incomes
+      }));
+      setTransactions((prev) => [
+        ...prev.filter((t) => t.type !== "Income"),
+        ...incomeList,
+      ]);
+    });
+
+    // Fetch expenses
+    const expensesCollection = collection(db, "expenses");
+    const unsubscribeExpenses = onSnapshot(expensesCollection, (snapshot) => {
+      const expenseList = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        type: "Expense", // Add type for expenses
+      }));
+      setTransactions((prev) => [
+        ...prev.filter((t) => t.type !== "Expense"),
+        ...expenseList,
+      ]);
+    });
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      unsubscribeIncomes();
+      unsubscribeExpenses();
+    };
+  }, []);
 
   // Sort transactions by date and filter by category
   const sortedTransactions = transactions
