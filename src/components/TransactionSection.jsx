@@ -13,7 +13,7 @@ const TransactionSection = () => {
     "Salary",
     "Groceries",
     "Rent",
-    "Freelance Work",
+    "Freelance",
     "Entertainment",
     "Utilities",
     "Transportation",
@@ -22,6 +22,7 @@ const TransactionSection = () => {
     "Education",
     "Travel",
     "Debt & Loans",
+    "Investment",
     "Other",
   ];
 
