@@ -1,5 +1,5 @@
 import React from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 const TransactionChart = ({ transactions }) => {
   // Group transactions by date
@@ -9,9 +9,9 @@ const TransactionChart = ({ transactions }) => {
       acc[date] = { income: 0, expense: 0 };
     }
     if (transaction.type === "Income") {
-      acc[date].income += transaction.amount;
+      acc[date].income += Number(transaction.amount);
     } else {
-      acc[date].expense += transaction.amount;
+      acc[date].expense += Number(transaction.amount);
     }
     return acc;
   }, {});
@@ -36,25 +36,64 @@ const TransactionChart = ({ transactions }) => {
     };
   });
 
+  // Format date for X-axis (e.g., "01/10" for October 1st)
+  const formatDate = (date) => {
+    const [year, month, day] = date.split("-");
+    return `${day}/${month}`;
+  };
+
+  // Custom Tooltip
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 border rounded shadow">
+          <p className="font-bold">{label}</p>
+          <p className="text-green-600">Income: ${payload[0].value}</p>
+          <p className="text-red-600">Expense: ${payload[1].value}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div>
+    <div style={{ width: "100%", padding: "20px" }}>
       <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
         Transactions for the Current Month
       </h2>
-      <LineChart
-        width={800}
-        height={400}
-        data={chartData}
-        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="date" />
-        <YAxis domain={[50, 4000]} /> {/* Set Y-axis range from $50 to $4000 */}
-        <Tooltip />
-        <Legend />
-        <Line type="monotone" dataKey="income" stroke="#82ca9d" />
-        <Line type="monotone" dataKey="expense" stroke="#ff6b6b" />
-      </LineChart>
+      <ResponsiveContainer width="100%" height={400}>
+        <LineChart
+          data={chartData}
+          margin={{ top: 20, right: 30, left: 20, bottom: 50 }} // Increased bottom margin
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis
+            dataKey="date"
+            tickFormatter={formatDate} // Format the date
+            interval={0} // Show every single date
+            angle={-45} // Rotate labels for better readability
+            textAnchor="end"
+            tick={{ fontSize: 12 }} // Adjust font size
+          />
+          <YAxis domain={[0, "auto"]} /> {/* Auto-adjust Y-axis range */}
+          <Tooltip content={<CustomTooltip />} /> {/* Custom tooltip */}
+          <Legend />
+          <Line
+            type="monotone"
+            dataKey="income"
+            stroke="#82ca9d"
+            name="Income"
+            strokeWidth={2}
+          />
+          <Line
+            type="monotone"
+            dataKey="expense"
+            stroke="#ff6b6b"
+            name="Expense"
+            strokeWidth={2}
+          />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
   );
 };

@@ -9,6 +9,9 @@ const Homepage = () => {
   // Access user data from Outlet context
   const { user } = useOutletContext();
 
+  // State for transactions
+  const [transactions, setTransactions] = useState([]);
+
   // State for totals
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpenses, setTotalExpenses] = useState(0);
@@ -20,9 +23,14 @@ const Homepage = () => {
     const incomesCollection = collection(db, "incomes");
     const unsubscribeIncomes = onSnapshot(incomesCollection, (snapshot) => {
       const incomeList = snapshot.docs.map((doc) => ({
+        id: doc.id,
         ...doc.data(),
         type: "Income", // Add type for incomes
       }));
+      setTransactions((prev) => [
+        ...prev.filter((t) => t.type !== "Income"),
+        ...incomeList,
+      ]);
       const totalIncome = incomeList.reduce(
         (total, income) => total + Number(income.amount),
         0
@@ -34,9 +42,14 @@ const Homepage = () => {
     const expensesCollection = collection(db, "expenses");
     const unsubscribeExpenses = onSnapshot(expensesCollection, (snapshot) => {
       const expenseList = snapshot.docs.map((doc) => ({
+        id: doc.id,
         ...doc.data(),
         type: "Expense", // Add type for expenses
       }));
+      setTransactions((prev) => [
+        ...prev.filter((t) => t.type !== "Expense"),
+        ...expenseList,
+      ]);
       const totalExpenses = expenseList.reduce(
         (total, expense) => total + Number(expense.amount),
         0
@@ -91,7 +104,7 @@ const Homepage = () => {
       <div className="bg-white p-6 rounded-lg shadow-md mb-8">
         <h2 className="text-xl font-bold mb-4 text-gray-800">Transaction Overview</h2>
         <div className="bg-gray-50 p-4 rounded-lg">
-          <TransactionChart transactions={[]} /> {/* Pass empty array or mock data if needed */}
+          <TransactionChart transactions={transactions} /> {/* Pass transactions */}
         </div>
       </div>
 
