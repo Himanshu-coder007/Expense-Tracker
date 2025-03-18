@@ -1,11 +1,9 @@
-// src/pages/Income.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { db } from "../firebase"; // Import Firestore instance
+import { collection, addDoc, onSnapshot } from "firebase/firestore"; // Import Firestore functions
 
 const Income = () => {
-  // State for income transactions
   const [incomes, setIncomes] = useState([]);
-
-  // State for form inputs
   const [formData, setFormData] = useState({
     date: "",
     category: "",
@@ -13,18 +11,34 @@ const Income = () => {
     description: "",
   });
 
-  // Handle form input changes
+  // Fetch incomes from Firestore on component mount
+  useEffect(() => {
+    const incomesCollection = collection(db, "incomes");
+    const unsubscribe = onSnapshot(incomesCollection, (snapshot) => {
+      const incomeList = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setIncomes(incomeList);
+    });
+
+    return () => unsubscribe(); // Cleanup subscription on unmount
+  }, []);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const newIncome = { ...formData, id: Date.now() };
-    setIncomes([...incomes, newIncome]);
-    setFormData({ date: "", category: "", amount: "", description: "" }); // Reset form
+    try {
+      const incomesCollection = collection(db, "incomes");
+      await addDoc(incomesCollection, formData); // Add new income to Firestore
+      setFormData({ date: "", category: "", amount: "", description: "" }); // Reset form
+    } catch (error) {
+      console.error("Error adding document: ", error);
+    }
   };
 
   return (
